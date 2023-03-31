@@ -31,7 +31,8 @@ class MyApp extends StatelessWidget {
         Locale('es'), // Spanish
       ],
       //home: SeleccionTestaferroScreen(),
-      home: RanflaReporteScreen(),
+      home: LoginScreen(),
+      //home: LoginScreen()
 
     );
   }

@@ -10,6 +10,7 @@ import 'package:pollovivoapp/model/pedido_buscar.dart';
 import 'package:pollovivoapp/model/pedido_cliente.dart';
 import 'package:pollovivoapp/model/pedido_response.dart';
 import 'package:pollovivoapp/model/reparto_response.dart';
+import 'package:pollovivoapp/model/reporte_ranfla_response.dart';
 import 'package:pollovivoapp/model/save_request.dart';
 import 'package:pollovivoapp/model/save_request_cab.dart';
 import 'package:pollovivoapp/model/save_response.dart';
@@ -236,6 +237,21 @@ class PedidoApiProvider {
       }
     } catch (e) {
       print(e);
+      throw e;
+    }
+  }
+
+  Future<ReporteRanflaResponse> obtenerReporteDeRanflas(String puntoVenta, List<int> lotes) async {
+    String lotesString = lotes.join(',');
+    try{
+      Response response = await _dio.get("/PesadasPorLotes?tnPuntoVenta=${puntoVenta}&tcLotes=${lotesString}");
+      if(response.statusCode == 200 && response.data["nCodError"] == 0) {
+        return ReporteRanflaResponse.fromJson(response.data["oContenido"]);
+      }else {
+        throw Exception("No se puede obtener los pesajes de las ranflas");
+      }
+    }catch(e) {
+      print("[ERROR] ObtenerReporteDeRanflas : ${e.toString()}");
       throw e;
     }
   }

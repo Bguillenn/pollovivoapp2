@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:collection/equality.dart';
 
 class Ranfla {
   final int lotePrincipal;
@@ -43,5 +44,14 @@ class Ranfla {
   String toString() {
 
     return "Lote Ranfla: "+ formatLote() + "  "+ this.placa.trim() + "  Und:" +this.disponible.toString();
+  }
+
+  bool equals(Ranfla ranfla) {
+    Function eq = const ListEquality().equals;
+    return this.placa == ranfla.placa &&
+          this.viaje == ranfla.viaje &&
+          this.lotePrincipal == ranfla.lotePrincipal &&
+          eq(this.lotes, ranfla.lotes) &&
+          this.disponible == ranfla.disponible;
   }
 }

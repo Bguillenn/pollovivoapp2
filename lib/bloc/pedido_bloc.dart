@@ -10,7 +10,9 @@ import 'package:pollovivoapp/model/pedido_cliente.dart';
 import 'package:pollovivoapp/model/pedido_request.dart';
 import 'package:pollovivoapp/model/pedido_response.dart';
 import 'package:pollovivoapp/model/pesaje_detalle_item.dart';
+import 'package:pollovivoapp/model/ranfla.dart';
 import 'package:pollovivoapp/model/reparto_response.dart';
+import 'package:pollovivoapp/model/reporte_ranfla_response.dart';
 import 'package:pollovivoapp/model/save_request.dart';
 import 'package:pollovivoapp/model/save_request_cab.dart';
 import 'package:pollovivoapp/model/save_response.dart';
@@ -240,6 +242,16 @@ class PedidoBloc {
 
   Future<int> cerrarTodosPedidos(String puntoVenta) async {
     int response = await pedidoRepository.cerrarTodosPedidos(puntoVenta);
+    return response;
+  }
+
+  Future<ReporteRanflaResponse> obtenerReporteDeRanflas(String puntoVenta, List<Ranfla> ranflas) async {
+    //Obtenemos los lotes de las ranflas y lo enviamos
+    List<int> lotes = [];
+    ranflas.forEach((ranfla) { 
+      lotes.addAll(ranfla.lotes);
+    });
+    ReporteRanflaResponse response = await pedidoRepository.obtenerReporteDeRanflas(puntoVenta, lotes);
     return response;
   }
 }

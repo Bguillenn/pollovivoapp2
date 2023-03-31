@@ -21,6 +21,7 @@ import 'package:pollovivoapp/ui/screens/pedido_abrir.dart';
 import 'package:pollovivoapp/ui/screens/pedido_screen.dart';
 import 'package:pollovivoapp/ui/screens/pedido_testaferro.dart';
 import 'package:pollovivoapp/ui/screens/preparacion_reparto_screen.dart';
+import 'package:pollovivoapp/ui/screens/ranfla_reporte_screen.dart';
 import 'package:pollovivoapp/ui/screens/reparto_abrir.dart';
 import 'package:pollovivoapp/ui/screens/resumen_pedido.dart';
 import 'package:pollovivoapp/ui/screens/search_screen.dart';
@@ -324,15 +325,25 @@ class _InicioScreenState extends State<InicioPesajeScreen> {
     for (TipoRepeso item in _tiposRepeso) {
       titles.add(GestureDetector(
         onTap: () {
+          TipoRepeso currentOpcion = _tipoRepesoSelected;
           Navigator.pop(context, true);
+          if(item.codigo == 11) {
+            TipoRepeso currentOpcion = _tipoRepesoSelected;
+            Navigator.push(
+              context,
+              new MaterialPageRoute<int>(
+                  builder: (context) => RanflaReporteScreen(_ranflas)));
+            return;
+          }
           setState(() {
-            currentIndex = item.codigo;
-            _tipoRepesoSelected = item;
-            if (item.codigo == 5 || item.codigo == 1)
+            TipoRepeso newOpcion = (item.codigo == 11) ? currentOpcion : item;
+            currentIndex = newOpcion.codigo;
+            _tipoRepesoSelected = newOpcion;
+            if (newOpcion.codigo == 5 || newOpcion.codigo == 1)
               filtrarItemsPorPlaca();
-            else if (item.codigo == 3)
+            else if (newOpcion.codigo == 3)
               loadPedido();
-            else if (item.codigo == 6)
+            else if (newOpcion.codigo == 6)
               _pedidos = widget.response.loginData.pedidos
                   .where(
                       (element) => element.cliente == _clienteSelected.codigo)
@@ -699,7 +710,8 @@ class _InicioScreenState extends State<InicioPesajeScreen> {
     if (_tipoRepesoSelected.codigo != 6 &&
         _tipoRepesoSelected.codigo != 7 &&
         _tipoRepesoSelected.codigo != 8 &&
-        _tipoRepesoSelected.codigo != 9)
+        _tipoRepesoSelected.codigo != 9 &&
+        _tipoRepesoSelected.codigo != 11)
       return Column(
         children: [
           DropdownButton<Ranfla>(
@@ -764,7 +776,8 @@ class _InicioScreenState extends State<InicioPesajeScreen> {
         _tipoRepesoSelected.codigo != 5 &&
         _tipoRepesoSelected.codigo != 7 &&
         _tipoRepesoSelected.codigo != 8 &&
-        _tipoRepesoSelected.codigo != 10)
+        _tipoRepesoSelected.codigo != 10 &&
+        _tipoRepesoSelected.codigo != 11)
       return DropdownButton<Cliente>(
         value: _clienteSelected,
         items: _clientes
@@ -1092,7 +1105,8 @@ class _InicioScreenState extends State<InicioPesajeScreen> {
   Widget renderSiguienteCerrarButton() {
     if (_tipoRepesoSelected.codigo != 7 &&
         _tipoRepesoSelected.codigo != 8 &&
-        _tipoRepesoSelected.codigo != 9)
+        _tipoRepesoSelected.codigo != 9 &&
+        _tipoRepesoSelected.codigo != 11)
       return Container(
         margin: EdgeInsets.all(50.0),
         child: MaterialButton(
