@@ -15,6 +15,7 @@ import 'package:pollovivoapp/model/save_request.dart';
 import 'package:pollovivoapp/model/save_request_cab.dart';
 import 'package:pollovivoapp/model/save_response.dart';
 import 'package:pollovivoapp/model/shared_pref.dart';
+import 'package:pollovivoapp/util/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pollovivoapp/model/login_response.dart';
 
@@ -241,10 +242,15 @@ class PedidoApiProvider {
     }
   }
 
-  Future<ReporteRanflaResponse> obtenerReporteDeRanflas(String puntoVenta, List<int> lotes) async {
-    String lotesString = lotes.join(',');
+  Future<ReporteRanflaResponse> obtenerReporteDeRanflas(String puntoVenta, DateTime fecha) async {
     try{
-      Response response = await _dio.get("/PesadasPorLotes?tnPuntoVenta=${puntoVenta}&tcLotes=${lotesString}");
+      String json = jsonEncode({
+        "tnPuntoVenta": puntoVenta,
+        "tdFecha": DateTimeToWCF(fecha),//Hasta.toIso8601String(),
+      });
+
+
+      Response response = await _dio.post("/PesadasPorLotes", data: json);
       if(response.statusCode == 200 && response.data["nCodError"] == 0) {
         return ReporteRanflaResponse.fromJson(response.data["oContenido"]);
       }else {

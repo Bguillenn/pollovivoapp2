@@ -245,13 +245,8 @@ class PedidoBloc {
     return response;
   }
 
-  Future<ReporteRanflaResponse> obtenerReporteDeRanflas(String puntoVenta, List<Ranfla> ranflas) async {
-    //Obtenemos los lotes de las ranflas y lo enviamos
-    List<int> lotes = [];
-    ranflas.forEach((ranfla) { 
-      lotes.addAll(ranfla.lotes);
-    });
-    ReporteRanflaResponse response = await pedidoRepository.obtenerReporteDeRanflas(puntoVenta, lotes);
+  Future<ReporteRanflaResponse> obtenerReporteDeRanflas(String puntoVenta, DateTime fecha) async {
+    ReporteRanflaResponse response = await pedidoRepository.obtenerReporteDeRanflas(puntoVenta, fecha);
     return response;
   }
 }

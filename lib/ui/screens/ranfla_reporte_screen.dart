@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:pollovivoapp/bloc/pedido_bloc.dart';
 import 'package:pollovivoapp/model/cliente.dart';
+import 'package:pollovivoapp/model/lote.dart';
 import 'package:pollovivoapp/model/pesada.dart';
 import 'package:pollovivoapp/model/ranfla.dart';
 
@@ -17,9 +18,10 @@ class _RanflaReporteScreenState extends State<RanflaReporteScreen> {
 
   Ranfla _currentRanflaValue;
   Cliente _currentClienteValue;
-  bool _tieneClientesRanfla;
 
   List<Ranfla> ranflas;
+
+  DateTime fechaSeleccionada;
 
   //En estos dos se guardan todos los clientes obtenidos de la peticion al API y las pesadas
   List<Cliente> clientesResponse = [];
@@ -34,31 +36,21 @@ class _RanflaReporteScreenState extends State<RanflaReporteScreen> {
     super.initState();
     this.ranflas = widget._ranflas;
     this._currentRanflaValue = null;
-    this._tieneClientesRanfla = true;
+    this.fechaSeleccionada = DateTime.now();
   }
 
   @override
   Widget build(BuildContext context) {
+    TextStyle subTitlesTextStyle = TextStyle(color: Colors.blue[800]);
     return Scaffold(
       appBar: renderAppBar(this.title),
-      body: FutureBuilder(
-        future: pedidoBloc.obtenerReporteDeRanflas('39', this.ranflas),
-        builder: (_, snapshot) {
-          if(snapshot.hasData){
-            this.clientesResponse = snapshot.data.oClientes;
-            this.pesadasResponse = snapshot.data.oPesadas;
-            if(this._currentRanflaValue == null) {
-              this._currentRanflaValue = ranflas[0];
-              this.loadPesadasAndClientes(this._currentRanflaValue);
-              this._currentClienteValue = this.clientes[0];
-            }
-            return renderBody(this.ranflas);
-          }
-          else if(snapshot.hasError){
-            return Icon(Icons.error);
-          }else
-            return CircularProgressIndicator();
-        },
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('Selecciona una fecha', style: subTitlesTextStyle),
+          renderDateButton(),
+          renderDynamicContent(),
+        ],
       ),
     );
   }
@@ -66,50 +58,113 @@ class _RanflaReporteScreenState extends State<RanflaReporteScreen> {
   AppBar renderAppBar(String title) {
     return AppBar(
       title: Text(title),
-      actions: [IconButton(onPressed: () => {}, icon: Icon(Icons.download))],
     );
   }
 
-  Widget renderBody(List<Ranfla> ranflas) {
+  FutureBuilder renderDynamicContent() {
+    return FutureBuilder(
+        future: pedidoBloc.obtenerReporteDeRanflas('39', this.fechaSeleccionada),
+        builder: (_, snapshot) {
+          if(snapshot.hasData){
+            if(snapshot.data.oLotes.length <= 0)
+              return Expanded(child: renderSinElementosContainer(Icons.error, "No hay datos para la fecha seleccionada"));
+            print(snapshot.data.oLotes);
+            this.clientesResponse = [];
+            this.ranflas = [];
+            this.pesadasResponse = [];
+            this.clientesResponse = snapshot.data.oClientes;
+            this.pesadasResponse = snapshot.data.oPesadas;
+            this.ranflas = generarRanflas(snapshot.data.oLotes);
+            if(this._currentRanflaValue == null) {
+              this._currentRanflaValue = ranflas[0];
+              this.loadPesadasAndClientes(this._currentRanflaValue);
+              this._currentClienteValue = this.clientes[0];
+            }
+            return renderBody();
+          }
+          else if(snapshot.hasError){
+            print(snapshot.error);
+            return Icon(Icons.error);
+          }else
+            return CircularProgressIndicator();
+        },
+      );
+  }
+
+  Widget renderDateButton() {
+    return MaterialButton(
+                  child: Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      Text(
+                        'Fecha',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      Icon(const IconData(0xe03a, fontFamily: 'MaterialIcons')),
+                      Text(
+                        '${fechaSeleccionada.year}/${fechaSeleccionada.month}/${fechaSeleccionada.day}',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                  onPressed: () async {
+                    DateTime newDate = await showDatePicker(
+                      context: context,
+                      locale: const Locale("es", "ES"),
+                      initialDate: fechaSeleccionada,
+                      firstDate: DateTime(DateTime.now().year - 1),
+                      lastDate: DateTime(DateTime.now().year + 1),
+                    );
+                    fechaSeleccionada = newDate ?? fechaSeleccionada;
+                    setState(() {});
+                  });
+  }
+
+  Widget renderBody() {
     
     TextStyle subTitlesTextStyle = TextStyle(color: Colors.blue[800]);
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: <Widget>[
-          Text('Selecciona la ranfla:', style: subTitlesTextStyle),
-          SizedBox(height: 6.0),
-          renderRanflaDropdown(ranflas),
-          Text('Selecciona cliente:', style: subTitlesTextStyle),
-          SizedBox(height: 6.0),
-          (this.clientes.length > 0)
-              ? renderClienteDropdown(this.clientes, this._currentClienteValue)
-              : renderSinElementosContainer(
-                  Icons.clear_sharp, 'Esta ranfla no atendio ningun cliente'),
-          SizedBox(height: 10.0),
-          Text('Detalles del pedido del cliente', style: subTitlesTextStyle),
-          SizedBox(height: 6.0),
-          (this.pesadas.length > 0)
-              ? renderDetalleCliente()
-              : Expanded(
-                  child: renderSinElementosContainer(
-                      Icons.line_style_outlined, 'No hay detalle a mostrar'),
-                ),
-        ],
+    return Expanded(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Text('Selecciona la ranfla:', style: subTitlesTextStyle),
+            SizedBox(height: 6.0),
+            (this.ranflas.length > 0)
+                ? renderRanflaDropdown(this.ranflas)
+                : renderSinElementosContainer(Icons.local_shipping, "No hay ranflas el dia seleccionado"),
+            Text('Selecciona cliente:', style: subTitlesTextStyle),
+            SizedBox(height: 6.0),
+            (this.clientes.length > 0)
+                ? renderClienteDropdown(this.clientes, this._currentClienteValue)
+                : renderSinElementosContainer(
+                    Icons.clear_sharp, 'Esta ranfla no atendio ningun cliente'),
+            SizedBox(height: 10.0),
+            Text('Detalles del pedido del cliente', style: subTitlesTextStyle),
+            SizedBox(height: 6.0),
+            (this.pesadas.length > 0)
+                ? renderDetalleCliente()
+                : Expanded(
+                    child: renderSinElementosContainer(
+                        Icons.line_style_outlined, 'No hay detalle a mostrar'),
+                  ),
+          ],
+        ),
       ),
     );
   }
 
   Widget renderRanflaDropdown(List<Ranfla> ranflas) {
-    return DropdownButton(
+
+    DropdownButton dropdown = DropdownButton(
       value: this._currentRanflaValue,
       iconSize: 40.0,
       itemHeight: 80.0,
       isExpanded: true,
       items: ranflas.map((ranfla) => createRanflaDropdownItem(ranfla)).toList(),
-      onChanged: (Ranfla newValue) {
+      onChanged: (newValue) {
         setState(() {
           if(!this._currentRanflaValue.equals(newValue)) {
             loadPesadasAndClientes(newValue);
@@ -117,10 +172,11 @@ class _RanflaReporteScreenState extends State<RanflaReporteScreen> {
             this._currentClienteValue = this.clientes[0];
           
             this._currentRanflaValue = newValue;
-            }
+          }
         });
       },
     );
+    return dropdown;
   }
 
   DropdownMenuItem<Ranfla> createRanflaDropdownItem(Ranfla ranfla) {
@@ -197,7 +253,7 @@ class _RanflaReporteScreenState extends State<RanflaReporteScreen> {
   }
 
   Widget createTableHeader(List<String> titles, List<int> colSpan) {
-    TextStyle headerTextStyle = TextStyle(fontWeight: FontWeight.bold);
+    TextStyle headerTextStyle = TextStyle(fontWeight: FontWeight.bold, color: Colors.white);
     return Container(
       child: Row(children: [
         createCellWidget(titles[0], colSpan[0], headerTextStyle, TextAlign.start),
@@ -207,7 +263,7 @@ class _RanflaReporteScreenState extends State<RanflaReporteScreen> {
         createCellWidget(titles[4], colSpan[4], headerTextStyle, TextAlign.start),
         createCellWidget(titles[5], colSpan[5], headerTextStyle, TextAlign.start),
       ]),
-      decoration: BoxDecoration(color: Colors.amber[50]),
+      decoration: BoxDecoration(color: Colors.blue),
     );
   }
 
@@ -226,14 +282,13 @@ class _RanflaReporteScreenState extends State<RanflaReporteScreen> {
     );
   }
 
+
+
   Widget createTableDetails(List<int> colSpan) {
     return Expanded(
           child: Container(
             child: ListView(
               children: [
-                Divider(
-                  color: Color.fromRGBO(0, 0, 0, 0.8),
-                ),
                 ...createRows(
                   this.pesadas.where(
                     (pesada) => pesada.nCliente == this._currentClienteValue.codigo)
@@ -249,7 +304,7 @@ class _RanflaReporteScreenState extends State<RanflaReporteScreen> {
       rows.add(
         Container(
           decoration: BoxDecoration(
-            color: (i%2 != 0) ? Color.fromRGBO(0, 0, 0, 0.030) : null,
+            color: (i%2 != 0) ? Color.fromRGBO(255,255,255,0.7) : Colors.white,
             border: Border(
               bottom: BorderSide(
                 color: Color.fromRGBO(0, 0, 0, 0.1)
@@ -281,6 +336,33 @@ class _RanflaReporteScreenState extends State<RanflaReporteScreen> {
     });
     
     this.clientes = clientesPesadas;
-    if(clientesPesadas.length == 0) this._tieneClientesRanfla = false;
   }
+
+  List<Ranfla> generarRanflas(List<Lote> lotes) {
+    List<Ranfla> ranflas = [];
+    lotes.forEach((lote) {
+      //? Crea una ranfla por numero de lote y numero de viaje
+      Ranfla temp = ranflas.firstWhere(
+          (ran) => lote.placa == ran.placa && lote.viaje == ran.viaje,
+          orElse: () => null);
+      if (temp == null) {
+        List<int> lotes = [lote.numero];
+        temp = new Ranfla(lote.lotePrincipal, lote.viaje, lote.placa, lotes);
+        ranflas.add(temp);
+      } else {
+        temp.lotes.add(lote.numero);
+      }
+      temp.addDisponible(lote.disponible);
+    });
+    this.ranflas = ranflas.toList();
+    if (this._currentRanflaValue != null) {
+      this._currentRanflaValue = this.ranflas.firstWhere((element) =>
+          this._currentRanflaValue.placa == element.placa &&
+          this._currentRanflaValue.viaje == element.viaje);
+    } else {
+      this._currentRanflaValue = ranflas[0] ?? null;
+    }
+    return ranflas;
+  }
+
 }

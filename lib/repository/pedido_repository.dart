@@ -57,7 +57,7 @@ class PedidoRepository {
   Future<int> cerrarTodosPedidos(String PuntoVenta) =>
       pedidoApiProvider.cerrarTodosPedidos(PuntoVenta);
 
-  Future<ReporteRanflaResponse> obtenerReporteDeRanflas(String puntoVenta, List<int> lotes) =>
-      pedidoApiProvider.obtenerReporteDeRanflas(puntoVenta, lotes);
+  Future<ReporteRanflaResponse> obtenerReporteDeRanflas(String puntoVenta, DateTime fecha) =>
+      pedidoApiProvider.obtenerReporteDeRanflas(puntoVenta, fecha);
   
 }
