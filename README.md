@@ -1,16 +1,7 @@
-# pollovivoapp
+# Pesaje de Pollo Vivo Aplicacion
 
-A new Flutter application.
+Aplicacion para el pesaje de pollo vivo.
 
-## Getting Started
+## Version de Flutter y Dart
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://flutter.dev/docs/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://flutter.dev/docs/cookbook)
-
-For help getting started with Flutter, view our
-[online documentation](https://flutter.dev/docs), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+Para correr este proyecto se tiene que instalar la version 2.2.3 del SDK de Flutter y la version 2.13.4 de Dart, por defecto al descargar flutter viene incluido con Dart
