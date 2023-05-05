@@ -15,6 +15,8 @@ class Lote {
   double precio;
   Color colorLote;
 
+
+
   Lote(
       this.lotePrincipal,
       this.numero,
@@ -25,7 +27,11 @@ class Lote {
       this.unidades,
       this.jabas,
       this.taraJaba,
-      this.disponible);
+      this.disponible){
+        this.precio = 0.0;
+        this.unidadesPorJaba = 1;
+      }
+
 
   Lote.fromJson(Map<String, dynamic> json)
       : lotePrincipal = json["LotePrincipal"],

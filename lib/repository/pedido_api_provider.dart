@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:pollovivoapp/bloc/login_bloc.dart';
 import 'package:pollovivoapp/model/cliente.dart';
 import 'package:pollovivoapp/model/data_Response.dart';
+import 'package:pollovivoapp/model/factura_pedido.dart';
 import 'package:pollovivoapp/model/pedido_buscar.dart';
 import 'package:pollovivoapp/model/pedido_cliente.dart';
 import 'package:pollovivoapp/model/pedido_response.dart';
@@ -13,8 +14,11 @@ import 'package:pollovivoapp/model/reparto_response.dart';
 import 'package:pollovivoapp/model/reporte_ranfla_response.dart';
 import 'package:pollovivoapp/model/save_request.dart';
 import 'package:pollovivoapp/model/save_request_cab.dart';
+import 'package:pollovivoapp/model/save_request_solicitud.dart';
 import 'package:pollovivoapp/model/save_response.dart';
 import 'package:pollovivoapp/model/shared_pref.dart';
+import 'package:pollovivoapp/model/solicitud_devolucion.dart';
+import 'package:pollovivoapp/model/solicitud_response.dart';
 import 'package:pollovivoapp/util/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pollovivoapp/model/login_response.dart';
@@ -55,7 +59,7 @@ class PedidoApiProvider {
 
   Future<PedidoResponse> fetchDataPedido(int puntoVenta, int cliente, int tipo) async {
     Response response = await _dio.get("/TraerDatosPedidoRepesoExtendido?nPuntoVenta=${puntoVenta}&nCliente=${cliente}&nTipo=${tipo}");
-    print(response.data);
+    print('DATA: ${response.data}');
 
     if (response.statusCode == 200) {
       return PedidoResponse.fromJson(response.data);
@@ -164,7 +168,6 @@ class PedidoApiProvider {
   }
 
   Future<int> fetchImprimirControlPesos(String PuntoVenta,String Pedido) async {
-    print("ingresooo");
 
     //final response = await _dio.get('/ImprimirPedido?nPuntoVenta=${PuntoVenta}&numero=${Pedido}&impresora=\\\\printserver\\HPLJ_M527_Administracion');
     //final response = await _dio.get('/ImprimirPedido?nPuntoVenta=${PuntoVenta}&numero=${Pedido}&impresora=\\\\printserver\\KONICA MINOLTA 252');
@@ -175,7 +178,6 @@ class PedidoApiProvider {
     } else {
       throw Exception('no se pudo imprimir');
     }
-    print("salidaaaa");
 
   }
 
@@ -187,7 +189,6 @@ class PedidoApiProvider {
     final response = await _dio.get('/ImprimirPesada?nPuntoVenta=${PuntoVenta}&numeroPesada=${Pesada}&impresora=${loginBloc.impresora}');
     if (response.statusCode == 200) {
       return response.data["oContenido"];
-      return 1;
     } else {
       throw Exception('no se pudo imprimir');
     }
@@ -210,7 +211,7 @@ class PedidoApiProvider {
   }
 
   Future<List<PedidoCliente> > getPedidoTestaferros(String PuntoVenta,String Pedido) async{
-    List<PedidoCliente> objRBR = new List<PedidoCliente>();
+    List<PedidoCliente> objRBR = new List<PedidoCliente>.empty(growable: true);
     try {
       Response response = await _dio.get("/MostrarCabeseraPeidos?nPuntoVenta=${PuntoVenta}&nCliente=${Pedido}");
       print(response.data);
@@ -258,6 +259,91 @@ class PedidoApiProvider {
       }
     }catch(e) {
       print("[ERROR] ObtenerReporteDeRanflas : ${e.toString()}");
+      throw e;
+    }
+  }
+
+  Future<List<EstadoPedido>> obtenerPedidosConFacturacion(String nPuntoVenta, String sPedidos) async {
+    try{
+      Response response = await _dio.get("/ObtenerPedidosConFacturacion?nPuntoVenta=${nPuntoVenta}&sPedidos=${sPedidos}");
+      if (response.statusCode == 200 && response.data["nCodError"]==0) {
+        return List<EstadoPedido>.from( response.data["oContenido"].map( (json) { return EstadoPedido.fromJson(json); }) );
+      } else {
+        throw Exception(response.data["nCodError"]);
+      }
+    }catch(e) {
+      print("[ERROR PROVIDER] obtenerPedidosConFacturacion : ${e.toString()}");
+      throw e;
+    }
+  }
+
+  Future<List<FacturaPedido>> obtenerFacturasPedido(String nPuntoVenta, int nPedido) async {
+    try {
+      Response response = await _dio.get("/ObtenerFacturasPedido?nPuntoVenta=${nPuntoVenta}&nPedido=${nPedido}");
+      if (response.statusCode == 200 && response.data["nCodError"]==0) {
+        return List<FacturaPedido>.from( response.data["oContenido"].map( (json) { return FacturaPedido.fromJson(json); }) );
+      } else {
+        throw Exception(response.data["nCodError"]);
+      }
+    }catch(e) {
+      print("[ERROR PROVIDER] obtenerFacturasPedido : ${e.toString()}");
+      throw e;
+    }
+  }
+
+  Future<SolicitudDevolucion> saveSolicitudDevolucion(SaveRequestSolicitud request) async {
+    
+    try{
+    String requestJson = jsonEncode(request.toJson());
+      Response response = await _dio.post("/GenerarSolicitudDevolucion",  data: requestJson);
+      print(response.data);
+      if (response.statusCode == 200 && response.data["nCodError"]==0) {
+        SolicitudDevolucion solicitud = SolicitudDevolucion.fromJson(response.data["oContenido"]);
+        return solicitud;
+      } else {
+        throw Exception(response.data.nCodError);
+      }
+    }catch(e) {
+      print("[ERROR PROVIDER] obtenerFacturasPedido : ${e.toString()}");
+      throw e;
+    }
+  }
+
+  Future<SolicitudResponse> obtenerSolicitudesDevolucion(int puntoVenta) async{
+    try{
+      Response response = await _dio.get("/ObtenerSolicitudesDevolucion?nPuntoVenta=$puntoVenta");
+      
+      if (response.statusCode == 200 && response.data["nCodError"]==0) {
+        return SolicitudResponse.fromJson(response.data["oContenido"]);
+      } else {
+        throw Exception(response.data["nCodError"]);
+      }
+    }catch(e) {
+      print("[ERROR PROVIDER] obtenerSolicitudesDevolucion : ${e.toString()}");
+      throw e;
+    }
+  }
+
+  Future<SolicitudDevolucion> eliminarSolicitudDevolucion(SolicitudDevolucion solicitud) async {
+    try{
+      Response response = await _dio.delete(
+                            "/EliminarSolicitudDevolucion?"+
+                              'nPuntoVenta=${solicitud.puntoVenta}'+
+                              '&nTipoDoc=${solicitud.tipoDoc}'+
+                              '&nSerieDoc=${solicitud.serieDoc}'+
+                              '&nNumeroDoc=${solicitud.numeroDoc}'+
+                              '&nTtra=${solicitud.tTra}'+
+                              '&nNumtra=${solicitud.numtra}'+
+                              '&nRepeso=${solicitud.repeso}'
+                            );
+      if (response.statusCode == 200 && response.data["nCodError"]==0) {
+        return SolicitudDevolucion.fromJson(response.data["oContenido"]);
+      } else {
+        throw Exception(response.data["nCodError"]);
+      }
+      
+    }catch(e) {
+      print("[ERROR PROVIDER] eliminarSolicitudDevolucion : ${e.toString()}");
       throw e;
     }
   }

@@ -16,7 +16,7 @@ class PedidoResponse {
         nCodError = json['nCodError'],
         pedidoData = json['oContenido'] != null
             ? PedidoData.fromJson(json['oContenido'])
-            : PedidoData(List(), List());
+            : PedidoData(List.empty(growable: true), List.empty(growable: true));
 }
 
 class PedidoDetalleResponse {

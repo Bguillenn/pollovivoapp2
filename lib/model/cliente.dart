@@ -7,7 +7,9 @@ class Cliente {
   final int grupo;
   List<Tuple> descuento;
 
-  Cliente(this.codigo, this.nombre, this.grupo);
+  Cliente(this.codigo, this.nombre, this.grupo){
+    this.descuento = List.empty();
+  }
 
   Cliente.fromJson(Map<String, dynamic> json)
       : codigo = json["Codigo"],

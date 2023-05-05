@@ -85,6 +85,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
   bool reconectedactive = false;
   Timer timeractive;
   String stableText = "";
+  double descuentoPorProducto = 0.0;
   var uuid;
 
   @override
@@ -94,7 +95,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
     _numeroPesajes = "0";
     allPesos = new List<double>.empty(growable: true);
     double descuentoProducto = 0;
-
+    if(widget.pedidoItem.totalActual == null) widget.pedidoItem.totalActual = 0;
     if (widget.clienteSelected != null &&
         widget.clienteSelected.descuento.length > 0 &&
         widget.clienteSelected.descuento
@@ -103,12 +104,18 @@ class _PesajeScreenState extends State<PesajeScreen> {
           .firstWhere((element) => element.item1 == widget.pedidoItem.producto)
           .item2;
 
-    precioLoteProducto = widget.loginResponse.loginData.lotes
+
+    this.descuentoPorProducto = descuentoProducto;
+    if(this.widget.tipoRepesoSelected.codigo != 2 && this.widget.tipoRepesoSelected.codigo != 4) {
+      precioLoteProducto = widget.loginResponse.loginData.lotes
                 .firstWhere(
                     (element) => element.codigo == widget.loteSelected.codigo)
-                .precio *
+                .precio  *
             100 -
         descuentoProducto * 100;
+    }else {
+      precioLoteProducto = this.widget.loteSelected.precio * 100 - descuentoProducto * 100;
+    }
     precioLoteProducto = precioLoteProducto / 100;
     int numeroReparto;
     int itemReparro;
@@ -184,7 +191,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
     _testaferros = widget._clienteTestaferro;
     _selectedTestaferro = _testaferros.firstWhere(
         (tes) => tes.codigo == widget.clienteSelected.codigo,
-        orElse: null);
+        orElse: () => this.widget.clienteSelected);
     // pedidoBloc.getTestaferros(widget.puntoVenta.toString(), widget.clienteSelected.Codigo.toString()).then((resp) {
     //   _testaferros = resp;
     //   _selectedTestaferro = _testaferros.firstWhere((tes) => tes.Codigo==widget.clienteSelected.Codigo,orElse: null);
@@ -573,7 +580,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
 
       request = SaveRequest(requestCab, items);
       saveLocal.save(sharedName, request.toJson());
-      _numeroPesajes = items.length.toString();
+    _numeroPesajes = items.length.toString();
     } else {
       _pesoControles.text = moda.toString();
       Fluttertoast.showToast(
@@ -923,10 +930,11 @@ class _PesajeScreenState extends State<PesajeScreen> {
   }
 
   double PesoPromedio() {
+    if(items == null) return 0.0;
     double nTotalKilos = items.fold(
-        0, (sum, item) => sum + (item.nEstado == 1 ? item.KilosSinTara : 0));
+        0, (sum, item) => sum + (item.nEstado == 1 ? item.KilosSinTara?.toDouble()?? 0.0 : 0.0));
     double nTotalUnidades = items.fold(
-        0, (sum, item) => sum + (item.nEstado == 1 ? item.Unidades : 0));
+        0, (sum, item) => sum + (item.nEstado == 1 ? item.Unidades?.toDouble()??0.0 : 0.0));
     return nTotalKilos / nTotalUnidades;
   }
 
@@ -1283,11 +1291,11 @@ class _PesajeScreenState extends State<PesajeScreen> {
                               color: Colors.white,
                               fontSize: 18),
                         ),
-                        Text("pppppppppppppppp",
+                        Text("Total P. S/${calculateTotalPedido()}",
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                                fontSize: 18)),
+                                color: Colors.white60,
+                                fontSize: 12)),
 
                         // Text(items.fold(0, (sum, item) => sum + (item.nEstado==1?item.Jabas:0)).toStringAsFixed(0)+" J",
                         //   style: TextStyle(fontWeight: FontWeight.bold,color: Colors.white,fontSize: 18),
@@ -1351,8 +1359,8 @@ class _PesajeScreenState extends State<PesajeScreen> {
                                       (sum, item) =>
                                           sum +
                                           (item.nEstado == 1
-                                              ? item.KilosSinTara
-                                              : 0))
+                                              ? item?.KilosSinTara ?? 0.0
+                                              : 0.0))
                                   .toStringAsFixed(2) +
                               " Kg",
                           style: TextStyle(
@@ -1362,15 +1370,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
                         ),
                         Text(
                           " TOTAL: S/." +
-                              items
-                                  .fold(
-                                      0,
-                                      (sum, item) =>
-                                          sum +
-                                          (item.nEstado == 1
-                                              ? item.SubTotal
-                                              : 0))
-                                  .toStringAsFixed(2),
+                              calculateTotalActualRepeso(),
                           style: TextStyle(
                             fontSize: 16,
                             color: Colors.white,
@@ -1387,6 +1387,30 @@ class _PesajeScreenState extends State<PesajeScreen> {
         );
       },
     );
+  }
+
+  calculateTotalActualRepeso() {
+    if(this.widget.tipoRepesoSelected.codigo != 2 && this.widget.tipoRepesoSelected.codigo != 4) {
+      return items
+            .fold(
+                widget.pedidoItem.totalActual - (descuentoPorProducto * widget.pedidoItem.cantidadAcopio),
+                (sum, item) =>
+                    sum +
+                    (item.nEstado == 1
+                        ? item.SubTotal
+                        : 0))
+            .toStringAsFixed(2);
+    }else {
+      return '0.00';
+    }
+  }
+
+  calculateTotalPedido() {
+    if(this.widget.tipoRepesoSelected.codigo != 2 && this.widget.tipoRepesoSelected.codigo != 4) {
+      return (widget.pedidoItem.totalActual - (descuentoPorProducto * widget.pedidoItem.cantidadAcopio)).toStringAsFixed(2);
+    } else {
+      return '0.0';
+    }
   }
 
   void onPressedAceptarSave() async {
@@ -1409,6 +1433,15 @@ class _PesajeScreenState extends State<PesajeScreen> {
     //Request para guardar
     request = SaveRequest(requestCab, List.from(items));
     //* Llamada a Pedido BLOC
+
+    //* PARA DEVOLUCIONES RETORNARNOS EL SAVE REQUEST Y SE EJECUTARA LA LLAMADA AL BACK EN LA VISTA ANTERIOR
+    if(widget.tipoRepesoSelected.codigo == 4 || widget.tipoRepesoSelected.codigo == 2) {
+      Navigator.of(context).pop();
+      Navigator.pop(context, request);
+      deletePesajes();
+      return;
+    }
+
     pedidoBloc.saveDataPesajes(request).then((response) async {
       if (response.nCodError == 0) {
         deletePesajes();
@@ -1435,13 +1468,6 @@ class _PesajeScreenState extends State<PesajeScreen> {
           request.oCabecera.Numero = resp[0].Numero;
           request.oCabecera.nPedidoTestaferro = resp[0].nPedidoTestaferro;
         }
-        /**/
-        /*
-
-                        var list = await pedidoBloc.getList(uuid);
-                        var list2 = await pedidoBloc.getPesaje();
-                        */
-
         if (soloVenta())
           mostarPedido(
               request.oCabecera.Numero,

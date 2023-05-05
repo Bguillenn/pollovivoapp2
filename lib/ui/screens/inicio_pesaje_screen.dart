@@ -17,6 +17,7 @@ import 'package:pollovivoapp/model/repartos_response.dart';
 import 'package:pollovivoapp/model/tipo_repeso.dart';
 import 'package:pollovivoapp/model/unidad_reparto.dart';
 import 'package:pollovivoapp/model/ranfla.dart';
+import 'package:pollovivoapp/ui/screens/seleccion_pedido_facturado.dart';
 import 'package:pollovivoapp/ui/screens/pedido_abrir.dart';
 import 'package:pollovivoapp/ui/screens/pedido_screen.dart';
 import 'package:pollovivoapp/ui/screens/pedido_testaferro.dart';
@@ -91,6 +92,7 @@ class _InicioScreenState extends State<InicioPesajeScreen> {
 
   TipoRepeso _tipoRepesoVentaDirectaSelected;
   List<TipoRepeso> _repesoVentaDirecta;
+
 
   var redibujar;
 
@@ -328,15 +330,30 @@ class _InicioScreenState extends State<InicioPesajeScreen> {
           TipoRepeso currentOpcion = _tipoRepesoSelected;
           Navigator.pop(context, true);
           if(item.codigo == 11) {
-            TipoRepeso currentOpcion = _tipoRepesoSelected;
+            
             Navigator.push(
               context,
               new MaterialPageRoute<int>(
                   builder: (context) => RanflaReporteScreen(_ranflas)));
             return;
           }
+          if(item.codigo == 2) {
+            
+            Navigator.push(
+              context,
+              new MaterialPageRoute<int>(
+                  builder: (context) => SeleccionPedidoFacturado(
+                    _pedidos, 
+                    item,
+                    this.widget.response.loginData.motivosDevolucion, 
+                    this.widget.response.loginData.tiposDevolucion,
+                    this.widget.response,
+                    this._lotes)));
+            return;
+          }
           setState(() {
-            TipoRepeso newOpcion = (item.codigo == 11) ? currentOpcion : item;
+            //Si es reporte de ranflas o devolucion cliente regresamos a la opcion anterior ya que redirige a nueva vista
+            TipoRepeso newOpcion = (item.codigo == 11 || item.codigo == 2) ? currentOpcion : item;
             currentIndex = newOpcion.codigo;
             _tipoRepesoSelected = newOpcion;
             if (newOpcion.codigo == 5 || newOpcion.codigo == 1)
@@ -1221,10 +1238,10 @@ class _InicioScreenState extends State<InicioPesajeScreen> {
                     borderRadius: BorderRadius.circular(10.0),
                   ),
                   title: Text(
-                    "Cerrar",
+                    "PRECAUCIÓN!",
                     style: TextStyle(
-                      color: Colors.blue,
-                      fontSize: 18.0,
+                      color: Colors.red,
+                      fontSize: 24.0,
                       fontWeight: FontWeight.w900,
                     ),
                   ),
@@ -1232,8 +1249,10 @@ class _InicioScreenState extends State<InicioPesajeScreen> {
                       Text("¿Desea cerrar todos los pedidos del dia anterior?"),
                   actions: <Widget>[
                     TextButton(
+                      style: ButtonStyle(backgroundColor: MaterialStateProperty.all(Colors.red)),
                       child: Text(
                         "ACEPTAR",
+                        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                       ),
                       onPressed: () async {
                         try {
@@ -1264,6 +1283,7 @@ class _InicioScreenState extends State<InicioPesajeScreen> {
                     TextButton(
                       child: Text(
                         "CANCELAR",
+                        style: TextStyle(color: Colors.green),
                       ),
                       onPressed: () => Navigator.of(context).pop(),
                     ),

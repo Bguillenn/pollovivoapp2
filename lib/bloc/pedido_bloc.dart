@@ -5,6 +5,7 @@ import 'package:pollovivoapp/LocalDB/dbPesaje.dart';
 import 'package:pollovivoapp/balanza/bloc/balanza_bloc.dart';
 import 'package:pollovivoapp/model/cliente.dart';
 import 'package:pollovivoapp/model/data_Response.dart';
+import 'package:pollovivoapp/model/factura_pedido.dart';
 import 'package:pollovivoapp/model/pedido_buscar.dart';
 import 'package:pollovivoapp/model/pedido_cliente.dart';
 import 'package:pollovivoapp/model/pedido_request.dart';
@@ -15,7 +16,10 @@ import 'package:pollovivoapp/model/reparto_response.dart';
 import 'package:pollovivoapp/model/reporte_ranfla_response.dart';
 import 'package:pollovivoapp/model/save_request.dart';
 import 'package:pollovivoapp/model/save_request_cab.dart';
+import 'package:pollovivoapp/model/save_request_solicitud.dart';
 import 'package:pollovivoapp/model/save_response.dart';
+import 'package:pollovivoapp/model/solicitud_devolucion.dart';
+import 'package:pollovivoapp/model/solicitud_response.dart';
 import 'package:pollovivoapp/repository/pedido_repository.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -247,6 +251,31 @@ class PedidoBloc {
 
   Future<ReporteRanflaResponse> obtenerReporteDeRanflas(String puntoVenta, DateTime fecha) async {
     ReporteRanflaResponse response = await pedidoRepository.obtenerReporteDeRanflas(puntoVenta, fecha);
+    return response;
+  }
+
+  Future<List<EstadoPedido>> obtenerPedidosConFacturacion(String nPuntoVenta, String sPedidos) async {
+    List<EstadoPedido> response = await pedidoRepository.obtenerPedidosConFacturacion(nPuntoVenta, sPedidos);
+    return response;
+  }
+
+  Future<List<FacturaPedido>> obtenerFacturasPedido(String nPuntoVenta, int nPedido) async {
+    List<FacturaPedido> response = await pedidoRepository.obtenerFacturasPedido(nPuntoVenta, nPedido);
+    return response;
+  }
+
+  Future<SolicitudDevolucion> saveSolicitudDevolucion(SaveRequestSolicitud request) async {
+    SolicitudDevolucion response = await pedidoRepository.saveSolicitudDevolucion(request);
+    return response;
+  }
+
+  Future<SolicitudResponse> obtenerSolicitudesDevolucion(int puntoVenta) async {
+    SolicitudResponse response = await pedidoRepository.obtenerSolicitudesDevolucion(puntoVenta);
+    return response;
+  }
+
+  Future<SolicitudDevolucion> eliminarSolicitudDevolucion(SolicitudDevolucion solicitud) async {
+    SolicitudDevolucion response = await pedidoRepository.eliminarSolicitudDevolucion(solicitud);
     return response;
   }
 }

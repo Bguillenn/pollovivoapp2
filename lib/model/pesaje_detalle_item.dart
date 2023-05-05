@@ -19,11 +19,11 @@ class PesajeDetalleItem {
   PesajeDetalleItem.fromJson(Map<String, dynamic> json)
       : Numero = json["Numero"],
         Item = json["Item"],
-        Jabas = json["Jabas"],
-        Unidades = json["Unidades"],
+        Jabas = json["Jabas"].toInt(),
+        Unidades = json["Unidades"].toInt(),
         SubTotal = json["SubTotal"],
         Kilos = json["Kilos"],
-        FechaRegistro = DateTime.parse(json["FechaRegistro"]),
+        FechaRegistro = DateTime.parse(json["FechaRegistro"] ?? '2023-05-01'),
         nEstado = json["nEstado"];
 
   Map<String, dynamic> toJson() => {

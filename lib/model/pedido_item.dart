@@ -15,6 +15,7 @@ class PedidoItem {
   int estado;
   int reparto;
   int cliente;
+  double totalActual;
 
   List<RepesoItem> repesos;
 
@@ -36,7 +37,8 @@ class PedidoItem {
         rangoPermitido = json["RangoPermitido"],
         estado = json["Estado"],
         reparto = json["Reparto"],
-        cliente = json["Cliente"];
+        cliente = json["Cliente"],
+        totalActual = json["TotalActual"].toDouble() ?? 0.0;
 
   Map<String, dynamic> toJson() => {
         "Numero": numeroPedido,

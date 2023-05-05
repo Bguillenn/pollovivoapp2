@@ -59,7 +59,7 @@ class EstadoPedido{
         cCliente = json["cCliente"],
         dFechaRegistro = WCFtoDateTime(json["dFechaRegistro"].toString()),
         dFechaEntrega = WCFtoDateTime(json["dFechaEntrega"].toString()),
-        nTotal = json["nTotal"],
+        nTotal = json["nTotal"].toDouble(),
         nEstado = json["nEstado"],
         nResponsable = json["nResponsable"];
 }
