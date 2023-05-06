@@ -1,7 +1,6 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pollovivoapp/bloc/pedido_bloc.dart';
 import 'package:pollovivoapp/model/pesaje_detalle_item.dart';
@@ -75,7 +74,12 @@ class _SolicitudesDevolucionScreenState extends State<SolicitudesDevolucionScree
     return ListTile(
       title: Text('Solicitud ${getLetterDoc(solicitud.tipoDoc)}${solicitud.serieDoc}-${solicitud.numeroDoc}'),
       subtitle: Text('Repeso N° ${solicitud.repeso}'),
-      leading: Icon(Icons.swap_horizontal_circle),
+      leading: Image.asset(
+        'assets/images/' + (solicitud.devMuerto ? 'pollomuerto' : 'pollovivo') + '.png',
+          height: 36.0,
+          width: 36.0,
+          fit: BoxFit.fitWidth
+      ),
       trailing: Icon(Icons.more_vert_rounded),
       onTap: () => openBottomModal(context, solicitud, repesos),
     );
@@ -201,7 +205,7 @@ class _SolicitudesDevolucionScreenState extends State<SolicitudesDevolucionScree
           TextButton(
             onPressed: () async{
               try{
-                SolicitudDevolucion solicitudResponse = await pedidoBloc.eliminarSolicitudDevolucion(solicitud);
+                await pedidoBloc.eliminarSolicitudDevolucion(solicitud);
                 Fluttertoast.showToast(
                         msg: "Se elimino correctamente la solicitud",
                         toastLength: Toast.LENGTH_LONG,
