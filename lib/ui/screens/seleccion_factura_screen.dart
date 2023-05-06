@@ -265,8 +265,9 @@ class _SeleccionFacturaState extends State<SeleccionFactura> {
         Navigator.pop(context);
         Navigator.pop(context);
       }).catchError((err) {
+        
         Fluttertoast.showToast(
-          msg: "Sucedio un error al realizar la devolucion - ${err.toString()}",
+          msg: "Sucedio un error al realizar la devolucion: ${(err.message == 3) ? 'No puedes devolver mas unidades que las registradas en la factura': 'Intentalo denuevo'}",
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.BOTTOM,
           backgroundColor: Colors.red,

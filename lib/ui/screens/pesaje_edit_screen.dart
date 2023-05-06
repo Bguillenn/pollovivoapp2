@@ -53,8 +53,8 @@ class _PesajeEditScreenState extends State<PesajeEditScreen> {
   final _unidadesController = TextEditingController();
   final _PesoControles = TextEditingController();
   int _numeroItems, indexEdit = -1;
-  List<RepesoItem> items = List();
-  List<RepesoItem> Copia = List();
+  List<RepesoItem> items = List.empty(growable: true);
+  List<RepesoItem> Copia = List.empty(growable: true);
   SaveRequest request;
   SaveRequestCab requestCab;
   List<Cliente> _testaferros;
@@ -546,7 +546,7 @@ class _PesajeEditScreenState extends State<PesajeEditScreen> {
               onPressed: () async {
                 await loginBloc.conexion(true).then((response) {
                   if (response) {
-                    List<int> lotes = List();
+                    List<int> lotes = List.empty(growable: true);
                     for (var item in requestLote) {
                       if (item.Unidades > 0 && !lotes.contains(item.Numero))
                         lotes.add(item.Numero);

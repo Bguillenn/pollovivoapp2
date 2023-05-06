@@ -301,7 +301,7 @@ class PedidoApiProvider {
         SolicitudDevolucion solicitud = SolicitudDevolucion.fromJson(response.data["oContenido"]);
         return solicitud;
       } else {
-        throw Exception(response.data.nCodError);
+        throw Exception(response.data["nCodError"]);
       }
     }catch(e) {
       print("[ERROR PROVIDER] obtenerFacturasPedido : ${e.toString()}");
