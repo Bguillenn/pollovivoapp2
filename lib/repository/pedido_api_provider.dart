@@ -228,7 +228,7 @@ class PedidoApiProvider {
 
 
   Future<int> cerrarTodosPedidos(String PuntoVenta) async{
-    List<PedidoCliente> objRBR = new List<PedidoCliente>();
+    List<PedidoCliente> objRBR = new List<PedidoCliente>.empty(growable: true);
     try {
       Response response = await _dio.get("/CerrarTodosPedidos?nPuntoVenta=${PuntoVenta}");
       print(response.data);

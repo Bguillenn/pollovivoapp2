@@ -7,9 +7,8 @@ import 'package:pollovivoapp/bloc/login_bloc.dart';
 import 'package:pollovivoapp/model/login_response.dart';
 
 class LoginApiProvider {
-  //static const String baseUrl='http://appricopollo.com/WCF_Ventas/ServiceVentas.svc';    //URL Produccion
-  static const String BASE_URL =
-      'http://10.82.1.30/WCF_Ventas/ServiceVentas.svc'; //URL Desarrollo (Cambiar IP por el de su maquina)
+  static const String BASE_URL ='http://appricopollo.com/WCF_VentasBK/ServiceVentas.svc';    //URL Produccion
+  //static const String BASE_URL = 'http://10.82.1.30/WCF_Ventas/ServiceVentas.svc'; //URL Desarrollo (Cambiar IP por el de su maquina)
 
   //Singleton
   static final LoginApiProvider _instance = LoginApiProvider._internal();
