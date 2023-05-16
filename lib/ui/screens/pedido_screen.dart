@@ -626,7 +626,7 @@ class _PedidoScreenState extends State<PedidoScreen> {
               widget._repesoSelected.codigo == 1))
         data.cantidadReparto += sumaRP;
       if (widget.tipoRepesoSelected.codigo == 2 ||
-          widget.tipoRepesoSelected == 4) data.cantidadDevolucion += sumaRP;
+          widget.tipoRepesoSelected.codigo == 4) data.cantidadDevolucion += sumaRP;
       if (widget.tipoRepesoSelected.codigo == 3) data.cantidad -= sumaRP;
       _detalles.add(data);
       print(data.toString());
@@ -1015,7 +1015,7 @@ class _PedidoScreenState extends State<PedidoScreen> {
                     child: RotatedBox(
                       quarterTurns: 3,
                       child: Center(
-                          child: Text(loteCabSelect.Placa,
+                          child: Text(loteCabSelect.Placa.trim(),
                               style: TextStyle(
                                   color: Colors.white, fontSize: 20))),
                     ))),

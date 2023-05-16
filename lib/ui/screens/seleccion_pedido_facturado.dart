@@ -11,20 +11,20 @@ import 'package:pollovivoapp/ui/screens/solicitudes_devolucion_screen.dart';
 
 class SeleccionPedidoFacturado extends StatelessWidget {
   final String title = 'Seleccion de pedido';
-  final List<PedidoItem> pedidos;
   final TipoRepeso tipoRepeso;
   final List<TipoRepeso> motivoDevoluciones;
   final List<TipoRepeso> tipoDevoluciones;
   final LoginResponse loginResponse;
   final List<Lote> lotes;
+  final int puntoVenta;
 
   const SeleccionPedidoFacturado(
-    this.pedidos, 
     this.tipoRepeso,
     this.motivoDevoluciones, 
     this.tipoDevoluciones,
     this.loginResponse,
-    this.lotes);
+    this.lotes,
+    this.puntoVenta);
 
 
   @override
@@ -33,10 +33,11 @@ class SeleccionPedidoFacturado extends StatelessWidget {
     return Scaffold(
       appBar: renderAppBar(context, this.title),
       body: FutureBuilder(
-        future: pedidoBloc.obtenerPedidosConFacturacion('39', this.pedidos.map((pedido) => pedido.numeroPedido).toList().join(',')),
+        future: pedidoBloc.obtenerPedidosConFacturacion('39'),
         builder: (context, snapshot) {
           if(!snapshot.hasData) return Center(child: CircularProgressIndicator());
           if(snapshot.data.length == 0) return Center(child: Text('No hay pedidos facturados'));
+          if(snapshot.hasError) return Center(child: Text('Ocurrio un error obteniendo los datos'));
           return renderBody(context, snapshot.data);
         },
       ),
@@ -64,7 +65,7 @@ class SeleccionPedidoFacturado extends StatelessWidget {
         await Navigator.push(
               context,
               new MaterialPageRoute<int>(
-                  builder: (context) => SolicitudesDevolucionScreen()));
+                  builder: (context) => SolicitudesDevolucionScreen(this.puntoVenta)));
       },
       icon: Icon(Icons.library_books_outlined),
       label: Text('Ver solicitudes')
@@ -107,7 +108,8 @@ class SeleccionPedidoFacturado extends StatelessWidget {
                     this.motivoDevoluciones, 
                     this.tipoDevoluciones,
                     this.loginResponse,
-                    this.lotes)));
+                    this.lotes,
+                    this.puntoVenta)));
       }, //Navigate
     );
   }

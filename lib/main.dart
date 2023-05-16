@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:pollovivoapp/ui/screens/login_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:pollovivoapp/ui/screens/ranfla_reporte_screen.dart';
-import 'package:pollovivoapp/ui/screens/seleccion_testaferro_screen.dart';
 
 void main() {
   runApp(MyApp());

@@ -27,6 +27,7 @@ import 'package:pollovivoapp/ui/screens/reparto_abrir.dart';
 import 'package:pollovivoapp/ui/screens/resumen_pedido.dart';
 import 'package:pollovivoapp/ui/screens/search_screen.dart';
 import 'package:pollovivoapp/ui/screens/seleccion_testaferro_screen.dart';
+import 'package:pollovivoapp/ui/screens/transferencia_screen.dart';
 import 'package:pollovivoapp/ui/widgets/progresRefresActionBar.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
@@ -326,31 +327,48 @@ class _InicioScreenState extends State<InicioPesajeScreen> {
     List<Widget> titles = new List.empty(growable: true);
     for (TipoRepeso item in _tiposRepeso) {
       titles.add(GestureDetector(
-        onTap: () {
+        onTap: () async{
           TipoRepeso currentOpcion = _tipoRepesoSelected;
           Navigator.pop(context, true);
           if(item.codigo == 11) {
             
-            Navigator.push(
+            await Navigator.push(
               context,
               new MaterialPageRoute<int>(
                   builder: (context) => RanflaReporteScreen(_ranflas)));
             return;
           }
           if(item.codigo == 2) {
-            
-            Navigator.push(
+
+            await Navigator.push(
               context,
               new MaterialPageRoute<int>(
                   builder: (context) => SeleccionPedidoFacturado(
-                    _pedidos, 
                     item,
                     this.widget.response.loginData.motivosDevolucion, 
                     this.widget.response.loginData.tiposDevolucion,
                     this.widget.response,
-                    this._lotes)));
+                    this._lotes,
+                    this.widget.codigoPuntoVenta)));
+            this.updateState();
             return;
           }
+
+          if(item.codigo == 12) {
+           await Navigator.push(
+              context,
+              new MaterialPageRoute<int>(
+                  builder: (context) => TransferenciaScreen(
+                    ranflas: _ranflas,
+                    lotes: this._lotes,
+                    tiposPollo: this.widget.response.loginData.tiposDevolucion,
+                    loginResponse: this.widget.response,
+                    puntoVenta: widget.codigoPuntoVenta,
+                  )));
+            this.updateState();
+            return;
+          }
+
           setState(() {
             //Si es reporte de ranflas o devolucion cliente regresamos a la opcion anterior ya que redirige a nueva vista
             TipoRepeso newOpcion = (item.codigo == 11 || item.codigo == 2) ? currentOpcion : item;

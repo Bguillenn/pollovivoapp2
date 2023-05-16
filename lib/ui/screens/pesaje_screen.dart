@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 import 'dart:collection';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
@@ -10,7 +11,6 @@ import 'package:pollovivoapp/balanza/bloc/balanza_bloc.dart';
 import 'package:pollovivoapp/balanza/bloc/bluetooth_bloc.dart';
 import 'package:pollovivoapp/balanza/ui/screens/SelectBondedDevicePage.dart';
 import 'package:pollovivoapp/balanza/ui/widgets/BluetoothDeviceListEntry.dart';
-import 'package:date_time_picker/date_time_picker.dart';
 import 'package:pollovivoapp/bloc/login_bloc.dart';
 import 'package:pollovivoapp/bloc/pedido_bloc.dart';
 import 'package:pollovivoapp/model/cliente.dart';
@@ -21,11 +21,15 @@ import 'package:pollovivoapp/model/pesaje_detalle_item.dart';
 import 'package:pollovivoapp/model/reparto_item.dart';
 import 'package:pollovivoapp/model/save_request.dart';
 import 'package:pollovivoapp/model/save_request_cab.dart';
+import 'package:pollovivoapp/model/save_response.dart';
 import 'package:pollovivoapp/model/shared_pref.dart';
+import 'package:pollovivoapp/model/solicitud_devolucion.dart';
 import 'package:pollovivoapp/model/tipo_repeso.dart';
 import 'package:pollovivoapp/ui/widgets/input_custom.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+
+typedef CallBackFunction = Future<dynamic> Function(BuildContext, SaveRequest);
 
 class PesajeScreen extends StatefulWidget {
   TipoRepeso tipoRepesoSelected;
@@ -39,6 +43,9 @@ class PesajeScreen extends StatefulWidget {
   bool productoSinPedido;
   List<Cliente> _clienteTestaferro;
   TipoRepeso _repesoVentaDirecta;
+
+  CallBackFunction onSaveCallBack;
+
   PesajeScreen(
       this.tipoRepesoSelected,
       this.clienteSelected,
@@ -50,7 +57,7 @@ class PesajeScreen extends StatefulWidget {
       this.motivoSelected,
       this.productoSinPedido,
       this._clienteTestaferro,
-      this._repesoVentaDirecta);
+      this._repesoVentaDirecta, {this.onSaveCallBack});
 
   @override
   State<StatefulWidget> createState() {
@@ -106,7 +113,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
 
 
     this.descuentoPorProducto = descuentoProducto;
-    if(this.widget.tipoRepesoSelected.codigo != 2 && this.widget.tipoRepesoSelected.codigo != 4) {
+    if(this.widget.tipoRepesoSelected.codigo != 2 && this.widget.tipoRepesoSelected.codigo != 4 && this.widget.tipoRepesoSelected.codigo != 12 && this.widget.tipoRepesoSelected.codigo != 13) {
       precioLoteProducto = widget.loginResponse.loginData.lotes
                 .firstWhere(
                     (element) => element.codigo == widget.loteSelected.codigo)
@@ -125,8 +132,8 @@ class _PesajeScreenState extends State<PesajeScreen> {
     }
     requestCab = SaveRequestCab(
         widget.puntoVenta,
-        widget.tipoRepesoSelected.codigo != 3
-            ? widget.clienteSelected.codigo
+        widget.tipoRepesoSelected.codigo != 3 
+            ? widget.clienteSelected?.codigo ?? 0
             : 0,
         widget.loteSelected.numero,
         widget.pedidoItem.numeroPedido,
@@ -207,6 +214,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
         (default_Jabas * widget.loteSelected.unidadesPorJaba).toString();
     _jabasController.addListener(() {
       int jabas = 0;
+      setState(() {});
       if (_jabasController.text == "")
         jabas = 0;
       else
@@ -351,11 +359,10 @@ class _PesajeScreenState extends State<PesajeScreen> {
         if (pesoBalanza.contains("ST") &&
             pesoConvert > widget.loginResponse.loginData.dataUsuario.minimo) {
           // PesoConvert = redondeo1(PesoConvert);
-          print("ANTES ${pesoConvert}");
           String pesoRoundedString = pesoConvert.toStringAsFixed(1);
-          print("STRING DOUBLE ${pesoRoundedString}");
           pesoConvert = double.parse(pesoRoundedString);
           allPesos.add(pesoConvert);
+          setState(() {});
           // print(PesoConvert);
         }
 
@@ -461,37 +468,8 @@ class _PesajeScreenState extends State<PesajeScreen> {
       double ultimopeso = allPesos.last;
       Map<double, int> m = new HashMap();
       int contPesos = 0;
-      /* for(var elemento in AllPesos)
-      {
-        if(elemento>ultimopeso-ultimopeso*0.1)
-        {
-          contPesos++;
-          promedio+=elemento;
-          if (m.containsKey(elemento))
-            m[elemento]+=1;
-          else
-            m[elemento]=1;
-        }
-      }
-      promedio= promedio/contPesos;
-
-      int repeticiones=1;
-      //List<double> Modas= new List<double>();
-      double Moda1=0.0;
-      m.forEach((key, value) {
-        if(key>=promedio){
-          if(value>=repeticiones) {
-            repeticiones = value;
-            Moda1=moda;
-            moda=key;
-          }
-        }
-      });
-
-      if(Moda1!=0.0) moda= (moda+Moda1)/2;*/
       moda = allPesos.last; //double.parse(moda.toStringAsFixed(2));
       allPesos.clear();
-      //peso= double.parse(Pesobalaza);
     }
     if (moda <= 0) {
       Fluttertoast.showToast(
@@ -529,7 +507,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
           Fluttertoast.showToast(
             msg: "Cantidad a agregar excede a la cantidad disponible del lote",
             toastLength: Toast.LENGTH_LONG,
-            gravity: ToastGravity.BOTTOM,
+            gravity: ToastGravity.CENTER,
             backgroundColor: Colors.amber,
             textColor: Colors.black,
             fontSize: 20.0,
@@ -870,6 +848,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
                               TextInputType.numberWithOptions(decimal: true),
                           textAlign: TextAlign.right,
                           controller: _pesoControles,
+                          onChanged: (value) {print("ESTA CAMBIANDO LOS KILOS"); setState(() {});},
                           decoration: InputDecoration(
                             border: InputBorder.none,
                           ),
@@ -969,7 +948,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
                 ],
               )).then((value) => print("DIALOOGGG ${value}"));
     }
-
+    
     return Builder(
       builder: (BuildContext c) {
         return WillPopScope(
@@ -1029,14 +1008,14 @@ class _PesajeScreenState extends State<PesajeScreen> {
                       color: Colors.amberAccent.withOpacity(0.15),
                       child: Column(
                         children: <Widget>[
-                          if (widget.tipoRepesoSelected.codigo != 3)
+                          if (widget.tipoRepesoSelected.codigo != 3 && widget.clienteSelected != null)
                             Row(
                               children: [
                                 Container(
                                   width: 115,
                                   child: Text("Cliente:"),
                                 ),
-                                Text(widget.clienteSelected.nombre.trim()),
+                                Text(widget.clienteSelected.nombre.trim() ?? ''),
                               ],
                             ),
                           Row(
@@ -1066,6 +1045,17 @@ class _PesajeScreenState extends State<PesajeScreen> {
                               ),
                               Text(
                                   "${widget.loteSelected.codigo.trim()} - ${widget.loteSelected.descripcion.trim()}"),
+                            ],
+                          ),
+                          if(widget.pedidoItem != null)
+                            Row(
+                            children: [
+                              Container(
+                                width: 115,
+                                child: Text("Num. Pedido:"),
+                              ),
+                              Text(
+                                  "${widget.pedidoItem.numeroPedido}"),
                             ],
                           ),
                           if (bluetoothBloc.bluetoothDevice != null)
@@ -1099,7 +1089,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
                                     textAlign: TextAlign.right,
                                   ))
                               ],
-                            )
+                            ),
                         ],
                       ),
                     ),
@@ -1116,7 +1106,11 @@ class _PesajeScreenState extends State<PesajeScreen> {
                           width: 10.0,
                           height: 0,
                         ),
-                        InputCustom("Jabas", "#Jabas", _jabasController, false),
+                        InputCustom("Jabas", "#Jabas", _jabasController, false, onChange: (String value) {
+                          print("Esta cambiando las jabas");
+                          setState(() {
+                          });
+                        }),
                         SizedBox(width: 10.0),
                         InputCustom("Unidades", "#Unidades",
                             _unidadesController, false),
@@ -1291,7 +1285,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
                               color: Colors.white,
                               fontSize: 18),
                         ),
-                        Text("Total P. S/${calculateTotalPedido()}",
+                        Text("Total P. S/${calculateTotalBalanza()}",
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white60,
@@ -1368,7 +1362,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
                               color: Colors.white,
                               fontSize: 18),
                         ),
-                        Text(
+                        if(soloVenta()) Text(
                           " TOTAL: S/." +
                               calculateTotalActualRepeso(),
                           style: TextStyle(
@@ -1389,11 +1383,16 @@ class _PesajeScreenState extends State<PesajeScreen> {
     );
   }
 
+  
   calculateTotalActualRepeso() {
-    if(this.widget.tipoRepesoSelected.codigo != 2 && this.widget.tipoRepesoSelected.codigo != 4) {
+    if(
+      this.widget.tipoRepesoSelected.codigo != 2 
+      && this.widget.tipoRepesoSelected.codigo != 4 
+      && this.widget.tipoRepesoSelected.codigo != 12 
+      && this.widget.tipoRepesoSelected.codigo != 13) {
       return items
             .fold(
-                widget.pedidoItem.totalActual - (descuentoPorProducto * widget.pedidoItem.cantidadAcopio),
+                0,
                 (sum, item) =>
                     sum +
                     (item.nEstado == 1
@@ -1405,13 +1404,27 @@ class _PesajeScreenState extends State<PesajeScreen> {
     }
   }
 
-  calculateTotalPedido() {
-    if(this.widget.tipoRepesoSelected.codigo != 2 && this.widget.tipoRepesoSelected.codigo != 4) {
-      return (widget.pedidoItem.totalActual - (descuentoPorProducto * widget.pedidoItem.cantidadAcopio)).toStringAsFixed(2);
+  calculateTotalBalanza() {
+    print('Calculando el total balanza');
+    if(
+      this.widget.tipoRepesoSelected.codigo != 2 
+      && this.widget.tipoRepesoSelected.codigo != 4 
+      && this.widget.tipoRepesoSelected.codigo != 12 
+      && this.widget.tipoRepesoSelected.codigo != 13) {
+        double kilosBruto = (bluetoothBloc.bluetoothDevice.name == 'BALANZA MANUAL') 
+                              ? _pesoControles.text.toString() == '' ? 0.0 :  double.parse(_pesoControles.text.toString())
+                              : double.parse(pesoBalaza);
+          double kilosNeto = kilosBruto - (int.parse(_jabasController.text == "" ? '0': _jabasController.text) * widget.loginResponse.loginData.dataUsuario.taraJava);
+          double subtotal = (kilosNeto * precioLoteProducto) - (kilosNeto * descuentoPorProducto);
+          
+          
+        
+          return subtotal >= 0 ? subtotal.toStringAsFixed(2) : 'NEG.';
     } else {
       return '0.0';
     }
   }
+
 
   void onPressedAceptarSave() async {
     requestCab.Uuid = uuid.v1();
@@ -1430,15 +1443,105 @@ class _PesajeScreenState extends State<PesajeScreen> {
         requestCab.Tipo = 0;
       else if (widget._repesoVentaDirecta.codigo == 1) requestCab.Tipo = 10;
     }
+
+    List<PesajeDetalleItem> detalle = List.from(items);
+
+    //SOLO PARA VENTA Y TRANSFERENCIA VALIDAMOS LAS UNIDADES DISPONIBLES EN LOS LOTES
+    if(widget.tipoRepesoSelected.codigo == 10 || widget.tipoRepesoSelected.codigo == 12 || widget.tipoRepesoSelected.codigo == 13) {
+      try{
+        Lote loteInfo = await pedidoBloc.obtenerUnidadesDisponiblesLote(widget.puntoVenta, this.widget.loteSelected.lotePrincipal, this.widget.loteSelected.numero);
+        List<PesajeDetalleItem> itemstemp = items.where((item) => item.nEstado != 0).toList();
+        int totalUnidades = itemstemp.fold<int>(0, (previousValue, element) => previousValue + element.Unidades);
+        if(loteInfo.disponible < totalUnidades)
+          throw Exception("Las unidades pesadas superan a las que existen en el lote");
+      }catch(e) {
+        String message = e.toString().contains("unidades") ? e.toString() : 'Error desconocido intentalo denuevo';
+
+        Fluttertoast.showToast(
+            msg: message,
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 20.0,
+          );
+        return;
+      }
+    }
+
+
     //Request para guardar
-    request = SaveRequest(requestCab, List.from(items));
+    request = SaveRequest(requestCab, detalle);
     //* Llamada a Pedido BLOC
 
     //* PARA DEVOLUCIONES RETORNARNOS EL SAVE REQUEST Y SE EJECUTARA LA LLAMADA AL BACK EN LA VISTA ANTERIOR
-    if(widget.tipoRepesoSelected.codigo == 4 || widget.tipoRepesoSelected.codigo == 2) {
-      Navigator.of(context).pop();
-      Navigator.pop(context, request);
-      deletePesajes();
+    if(widget.tipoRepesoSelected.codigo == 4 || widget.tipoRepesoSelected.codigo == 2 || widget.tipoRepesoSelected.codigo == 12 || widget.tipoRepesoSelected.codigo == 13 ){
+      //Navigator.of(context).pop();
+      //Navigator.pop(context, request);
+      //Mostramos dialogo de carga
+      List<PesajeDetalleItem> itemstemp = items.where((item) => item.nEstado != 0).toList();
+      int totalUnidades = itemstemp.fold<int>(0, (previousValue, element) => previousValue + element.Unidades);
+      request = SaveRequest(requestCab, itemstemp);
+      showDialog(
+                barrierDismissible: false,
+                context: context,
+                builder: (_) {
+                  return Dialog(
+                    child: Container(
+                      height: 100.0,
+                      padding: EdgeInsets.all(16.0),
+                      child: Center(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            SizedBox(height: 16.0,),
+                            Text('Guardando repesos')
+                        ],),
+                      ),
+                    ),
+                  );
+              }
+        );
+      try{
+        //Usamos dynamic porque aveces llega otro tipo de respuesta
+        var response = await this.widget.onSaveCallBack(context, request);
+        Navigator.pop(context); // Modal de carga
+        this.widget.loteSelected.unidades = this.widget.loteSelected.unidades - totalUnidades;
+       bool temp = await pedidoBloc.saveDataChangue(false);
+        if (response.nCodError == 0) {
+          deletePesajes();
+          Navigator.pop(context); //Modal de comprobacion
+          Navigator.pop(context, totalUnidades);//Regresamos a la anterior vista
+          Fluttertoast.showToast(
+            msg: "Se grabó con éxito",
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.green,
+            textColor: Colors.white,
+            fontSize: 20.0,
+          );
+        }else {
+          Fluttertoast.showToast(
+            msg: response.cMsjError,
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.CENTER,
+            backgroundColor: Colors.red,
+            textColor: Colors.white,
+            fontSize: 20.0,
+          );
+        }
+      }catch(ex){
+        Navigator.pop(context); //Modal de carga
+        Fluttertoast.showToast(
+                msg: (ex.message) ? ex.message.split(',')[1] : "Ocurrio un error inesperado, intentalo denuevo",
+                toastLength: Toast.LENGTH_LONG,
+                gravity: ToastGravity.TOP,
+                backgroundColor: Colors.red,
+                textColor: Colors.white,
+                fontSize: 16.0,
+              );
+      }
       return;
     }
 
@@ -1483,6 +1586,7 @@ class _PesajeScreenState extends State<PesajeScreen> {
           msg: response.cMsjError,
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.CENTER,
+          
           backgroundColor: Colors.red,
           textColor: Colors.white,
           fontSize: 20.0,

@@ -10,6 +10,7 @@ import 'package:pollovivoapp/model/pedido_item.dart';
 import 'package:pollovivoapp/model/save_request.dart';
 import 'package:pollovivoapp/model/save_request_solicitud.dart';
 import 'package:pollovivoapp/model/solicitud_devolucion.dart';
+import 'package:pollovivoapp/model/solicitud_res.dart';
 import 'package:pollovivoapp/model/tipo_repeso.dart';
 import 'package:pollovivoapp/ui/screens/pesaje_screen.dart';
 
@@ -20,6 +21,7 @@ class SeleccionFactura extends StatefulWidget {
   final List<TipoRepeso> tipoDevoluciones;
   final LoginResponse loginResponse;
   final List<Lote> lotes;
+  final int puntoVenta;
 
   const SeleccionFactura(
     this.pedido, 
@@ -27,7 +29,8 @@ class SeleccionFactura extends StatefulWidget {
     this.motivoDevoluciones, 
     this.tipoDevoluciones,
     this.loginResponse,
-    this.lotes);
+    this.lotes,
+    this.puntoVenta);
 
   @override
   _SeleccionFacturaState createState() => _SeleccionFacturaState();
@@ -43,9 +46,10 @@ class _SeleccionFacturaState extends State<SeleccionFactura> {
     return Scaffold(
       appBar: renderAppBar(this.title),
       body: FutureBuilder(
-          future: pedidoBloc.obtenerFacturasPedido('39', this.widget.pedido.nNumero),
+          future: pedidoBloc.obtenerFacturasPedido('${widget.puntoVenta}', this.widget.pedido.nNumero),
           builder: (context, snapshot) {
             if(!snapshot.hasData) return Center(child: CircularProgressIndicator());
+            if(snapshot.hasError) return Center(child: Text('Ocurrio un error obteniendo las facturas intentalo denuevo'));
             if(snapshot.data.length == 0) return Center(child: Text('El pedido no tiene facturas'));
             
             return renderBody(snapshot.data);
@@ -214,10 +218,20 @@ class _SeleccionFacturaState extends State<SeleccionFactura> {
       );
       return;
     }
+     SolicitudDevolucion solicitudDevolucion = SolicitudDevolucion(
+        puntoVenta: facturaPedido.puntoVenta,
+        tipoDoc: facturaPedido.tipoDoc,
+        serieDoc: facturaPedido.serieDoc,
+        numeroDoc: facturaPedido.numeroDoc,
+        tTra: facturaPedido.ttra,
+        numtra: facturaPedido.numTra,
+        producto: facturaPedido.codigoProducto,
+        devMuerto: int.parse(selectedValueTipoDevolucion) == 4
+      );
     TipoRepeso findMotivo(int codigo) => this.widget.motivoDevoluciones.firstWhere((motivo) => motivo.codigo == codigo);
-    SaveRequest requestToSave = await Navigator.push(
+    await Navigator.push(
           context,
-          new MaterialPageRoute<SaveRequest>(
+          new MaterialPageRoute<int>(
               builder: (context) => PesajeScreen(
                   this.widget.tipoDevoluciones.firstWhere((element) => element.codigo == int.parse(this.selectedValueTipoDevolucion)),
                   Cliente(this.widget.pedido.nCliente, this.widget.pedido.cCliente, 0),
@@ -229,30 +243,11 @@ class _SeleccionFacturaState extends State<SeleccionFactura> {
                   findMotivo(int.parse(selectedValueMotivoDevolucion)).nombre,
                   true,
                   List<Cliente>.empty(),
-                  TipoRepeso(0, 'Venta Acopio/Directa'))));
+                  TipoRepeso(0, 'Venta Acopio/Directa'),
+                  onSaveCallBack: (context, request) => saveRepesos(context, request, solicitudDevolucion),)));
     
-    SolicitudDevolucion solicitudDevolucion = SolicitudDevolucion(
-        puntoVenta: facturaPedido.puntoVenta,
-        tipoDoc: facturaPedido.tipoDoc,
-        serieDoc: facturaPedido.serieDoc,
-        numeroDoc: facturaPedido.numeroDoc,
-        tTra: facturaPedido.ttra,
-        numtra: facturaPedido.numTra,
-        producto: facturaPedido.codigoProducto,
-        devMuerto: int.parse(selectedValueTipoDevolucion) == 4
-      );
-      if(requestToSave == null){
-        Fluttertoast.showToast(
-          msg: "No se registraron pesadas",
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-          backgroundColor: Colors.red,
-          textColor: Colors.white,
-          fontSize: 16.0,
-        );
-        return;
-      }
-      SaveRequestSolicitud saveRequestSolicitud = SaveRequestSolicitud(requestToSave.oCabecera, requestToSave.oDetalle, solicitudDevolucion);
+
+      /* SaveRequestSolicitud saveRequestSolicitud = SaveRequestSolicitud(requestToSave.oCabecera, requestToSave.oDetalle, solicitudDevolucion);
       pedidoBloc.saveSolicitudDevolucion(saveRequestSolicitud).then((SolicitudDevolucion response) async{
         Fluttertoast.showToast(
           msg: "Se guardo correctamente la devolucion repeso ${response.repeso}",
@@ -274,6 +269,13 @@ class _SeleccionFacturaState extends State<SeleccionFactura> {
           textColor: Colors.white,
           fontSize: 16.0,
         );
-      });
+      }); */
+  }
+
+  Future<dynamic> saveRepesos(BuildContext context, SaveRequest request, SolicitudDevolucion solicitudDevolucion) async{
+    SaveRequestSolicitud saveRequestSolicitud = SaveRequestSolicitud(request.oCabecera, request.oDetalle, solicitudDevolucion);
+    return await pedidoBloc.saveSolicitudDevolucion(saveRequestSolicitud).then((SolicitudRes response) async {
+      return response;
+    }).onError((error, stackTrace) => throw Exception('${error.toString()}'));
   }
 }

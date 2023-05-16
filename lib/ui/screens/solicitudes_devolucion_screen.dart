@@ -8,8 +8,8 @@ import 'package:pollovivoapp/model/solicitud_devolucion.dart';
 import 'package:pollovivoapp/model/solicitud_response.dart';
 
 class SolicitudesDevolucionScreen extends StatefulWidget {
-
-  const SolicitudesDevolucionScreen();
+  final puntoVenta;
+  const SolicitudesDevolucionScreen(this.puntoVenta);
 
   @override
   _SolicitudesDevolucionScreenState createState() => _SolicitudesDevolucionScreenState();
@@ -54,7 +54,7 @@ class _SolicitudesDevolucionScreenState extends State<SolicitudesDevolucionScree
 
   Widget renderListView(BuildContext context) {
     return FutureBuilder<SolicitudResponse>(
-      future: pedidoBloc.obtenerSolicitudesDevolucion(39),
+      future: pedidoBloc.obtenerSolicitudesDevolucion(this.widget.puntoVenta),
       builder: (context, snapshot) {
         if(!snapshot.hasData) return Center(child: CircularProgressIndicator());
         if(snapshot.data.solicitudes.length == 0) return Center(child: Text('No hay solicitudes de devolucion'));

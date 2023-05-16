@@ -7,7 +7,7 @@ class Lote {
   final String placa;
   final String codigo;
   final String descripcion;
-  final int unidades;
+  int unidades;
   final int jabas;
   int disponible;
   final double taraJaba;

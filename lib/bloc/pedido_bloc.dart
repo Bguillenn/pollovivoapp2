@@ -6,6 +6,7 @@ import 'package:pollovivoapp/balanza/bloc/balanza_bloc.dart';
 import 'package:pollovivoapp/model/cliente.dart';
 import 'package:pollovivoapp/model/data_Response.dart';
 import 'package:pollovivoapp/model/factura_pedido.dart';
+import 'package:pollovivoapp/model/lote.dart';
 import 'package:pollovivoapp/model/pedido_buscar.dart';
 import 'package:pollovivoapp/model/pedido_cliente.dart';
 import 'package:pollovivoapp/model/pedido_request.dart';
@@ -19,7 +20,9 @@ import 'package:pollovivoapp/model/save_request_cab.dart';
 import 'package:pollovivoapp/model/save_request_solicitud.dart';
 import 'package:pollovivoapp/model/save_response.dart';
 import 'package:pollovivoapp/model/solicitud_devolucion.dart';
+import 'package:pollovivoapp/model/solicitud_res.dart';
 import 'package:pollovivoapp/model/solicitud_response.dart';
+import 'package:pollovivoapp/model/transferencia_obtener_response.dart';
 import 'package:pollovivoapp/repository/pedido_repository.dart';
 import 'package:rxdart/rxdart.dart';
 
@@ -254,8 +257,8 @@ class PedidoBloc {
     return response;
   }
 
-  Future<List<EstadoPedido>> obtenerPedidosConFacturacion(String nPuntoVenta, String sPedidos) async {
-    List<EstadoPedido> response = await pedidoRepository.obtenerPedidosConFacturacion(nPuntoVenta, sPedidos);
+  Future<List<EstadoPedido>> obtenerPedidosConFacturacion(String nPuntoVenta) async {
+    List<EstadoPedido> response = await pedidoRepository.obtenerPedidosConFacturacion(nPuntoVenta);
     return response;
   }
 
@@ -264,8 +267,8 @@ class PedidoBloc {
     return response;
   }
 
-  Future<SolicitudDevolucion> saveSolicitudDevolucion(SaveRequestSolicitud request) async {
-    SolicitudDevolucion response = await pedidoRepository.saveSolicitudDevolucion(request);
+  Future<SolicitudRes> saveSolicitudDevolucion(SaveRequestSolicitud request) async {
+    SolicitudRes response = await pedidoRepository.saveSolicitudDevolucion(request);
     return response;
   }
 
@@ -274,8 +277,28 @@ class PedidoBloc {
     return response;
   }
 
-  Future<SolicitudDevolucion> eliminarSolicitudDevolucion(SolicitudDevolucion solicitud) async {
-    SolicitudDevolucion response = await pedidoRepository.eliminarSolicitudDevolucion(solicitud);
+  Future<SolicitudRes> eliminarSolicitudDevolucion(SolicitudDevolucion solicitud) async {
+    SolicitudRes response = await pedidoRepository.eliminarSolicitudDevolucion(solicitud);
+    return response;
+  }
+
+  Future<TransferenciaObtenerResponse> obtenerTransferencias(int puntoVenta, String lotes) async {
+    TransferenciaObtenerResponse response = await pedidoRepository.obtenerTransferencias(puntoVenta, lotes);
+    return response;
+  }
+
+  Future<SaveRequestCab> eliminarTransferencia(int puntoVenta, int repeso) async {
+    SaveRequestCab response = await pedidoRepository.eliminarTransferencia(puntoVenta, repeso);
+    return response;
+  }
+
+  Future<PesajeDetalleItem> eliminarTransferenciaDetalle(int puntoVenta, int repeso, int item) async {
+    PesajeDetalleItem response = await pedidoRepository.eliminarTransferenciaDetalle(puntoVenta, repeso, item);
+    return response;
+  }
+
+  Future<Lote> obtenerUnidadesDisponiblesLote(int puntoVenta, int lotePrincipal, int subLote) async {
+    Lote response = await pedidoRepository.obtenerUnidadesDisponiblesLote(puntoVenta, lotePrincipal, subLote);
     return response;
   }
 }

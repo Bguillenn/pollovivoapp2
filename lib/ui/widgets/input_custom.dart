@@ -3,12 +3,12 @@ import 'package:flutter/services.dart';
 import 'dart:math' as math;
 class InputCustom extends StatelessWidget {
 
-  const InputCustom(@required this.hint, @required this.label,@required this.controller,this.decimal);
+  const InputCustom(@required this.hint, @required this.label,@required this.controller,this.decimal, {this.onChange});
 
   final String hint, label;
   final TextEditingController controller;
   final bool decimal;
-
+  final Function(String) onChange;
 
 
   @override
@@ -19,6 +19,7 @@ class InputCustom extends StatelessWidget {
         controller: controller,
         inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
         keyboardType: TextInputType.numberWithOptions(decimal: true),
+        onChanged: onChange,
         decoration: InputDecoration(
           border: OutlineInputBorder(),
           hintText: hint,
@@ -32,6 +33,7 @@ class InputCustom extends StatelessWidget {
           controller: controller,
           keyboardType: TextInputType.number,
           inputFormatters: <TextInputFormatter>[FilteringTextInputFormatter.digitsOnly],
+          onChanged: onChange,
           decoration: InputDecoration(
             border: OutlineInputBorder(),
             hintText: hint,

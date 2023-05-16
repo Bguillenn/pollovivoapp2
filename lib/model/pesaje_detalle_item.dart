@@ -39,9 +39,9 @@ class PesajeDetalleItem {
   };
   PesajeDetalleItem.fromJson2(Map<String, dynamic> json)
       : Numero = json["Numero"],
-        Item = json["Item"],
-        Jabas = json["Jabas"],
-        Unidades = json["Unidades"],
+        Item = json["Item"].toInt(),
+        Jabas = json["Jabas"].toInt(),
+        Unidades = json["Unidades"].toInt(),
         Kilos = json["Kilos"],
         nEstado = json["nEstado"];
 

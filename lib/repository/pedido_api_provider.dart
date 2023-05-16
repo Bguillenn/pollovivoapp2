@@ -1,15 +1,17 @@
 import 'dart:convert';
-import 'dart:io';
+
 
 import 'package:dio/dio.dart';
-import 'package:flutter/services.dart';
+
 import 'package:pollovivoapp/bloc/login_bloc.dart';
 import 'package:pollovivoapp/model/cliente.dart';
 import 'package:pollovivoapp/model/data_Response.dart';
 import 'package:pollovivoapp/model/factura_pedido.dart';
+import 'package:pollovivoapp/model/lote.dart';
 import 'package:pollovivoapp/model/pedido_buscar.dart';
 import 'package:pollovivoapp/model/pedido_cliente.dart';
 import 'package:pollovivoapp/model/pedido_response.dart';
+import 'package:pollovivoapp/model/pesaje_detalle_item.dart';
 import 'package:pollovivoapp/model/reparto_response.dart';
 import 'package:pollovivoapp/model/reporte_ranfla_response.dart';
 import 'package:pollovivoapp/model/save_request.dart';
@@ -18,7 +20,9 @@ import 'package:pollovivoapp/model/save_request_solicitud.dart';
 import 'package:pollovivoapp/model/save_response.dart';
 import 'package:pollovivoapp/model/shared_pref.dart';
 import 'package:pollovivoapp/model/solicitud_devolucion.dart';
+import 'package:pollovivoapp/model/solicitud_res.dart';
 import 'package:pollovivoapp/model/solicitud_response.dart';
+import 'package:pollovivoapp/model/transferencia_obtener_response.dart';
 import 'package:pollovivoapp/util/utils.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:pollovivoapp/model/login_response.dart';
@@ -263,9 +267,9 @@ class PedidoApiProvider {
     }
   }
 
-  Future<List<EstadoPedido>> obtenerPedidosConFacturacion(String nPuntoVenta, String sPedidos) async {
+  Future<List<EstadoPedido>> obtenerPedidosConFacturacion(String nPuntoVenta) async {
     try{
-      Response response = await _dio.get("/ObtenerPedidosConFacturacion?nPuntoVenta=${nPuntoVenta}&sPedidos=${sPedidos}");
+      Response response = await _dio.get("/ObtenerPedidosConFacturacion?nPuntoVenta=$nPuntoVenta");
       if (response.statusCode == 200 && response.data["nCodError"]==0) {
         return List<EstadoPedido>.from( response.data["oContenido"].map( (json) { return EstadoPedido.fromJson(json); }) );
       } else {
@@ -291,17 +295,17 @@ class PedidoApiProvider {
     }
   }
 
-  Future<SolicitudDevolucion> saveSolicitudDevolucion(SaveRequestSolicitud request) async {
+  Future<SolicitudRes> saveSolicitudDevolucion(SaveRequestSolicitud request) async {
     
     try{
     String requestJson = jsonEncode(request.toJson());
       Response response = await _dio.post("/GenerarSolicitudDevolucion",  data: requestJson);
       print(response.data);
       if (response.statusCode == 200 && response.data["nCodError"]==0) {
-        SolicitudDevolucion solicitud = SolicitudDevolucion.fromJson(response.data["oContenido"]);
+        SolicitudRes solicitud = SolicitudRes.fromJson(response.data);
         return solicitud;
       } else {
-        throw Exception(response.data["nCodError"]);
+        throw Exception(response.data["cMsjError"]);
       }
     }catch(e) {
       print("[ERROR PROVIDER] obtenerFacturasPedido : ${e.toString()}");
@@ -324,7 +328,7 @@ class PedidoApiProvider {
     }
   }
 
-  Future<SolicitudDevolucion> eliminarSolicitudDevolucion(SolicitudDevolucion solicitud) async {
+  Future<SolicitudRes> eliminarSolicitudDevolucion(SolicitudDevolucion solicitud) async {
     try{
       Response response = await _dio.delete(
                             "/EliminarSolicitudDevolucion?"+
@@ -337,13 +341,70 @@ class PedidoApiProvider {
                               '&nRepeso=${solicitud.repeso}'
                             );
       if (response.statusCode == 200 && response.data["nCodError"]==0) {
-        return SolicitudDevolucion.fromJson(response.data["oContenido"]);
+        return SolicitudRes.fromJson(response.data);
       } else {
         throw Exception(response.data["nCodError"]);
       }
       
     }catch(e) {
       print("[ERROR PROVIDER] eliminarSolicitudDevolucion : ${e.toString()}");
+      throw e;
+    }
+  }
+  
+
+  Future<TransferenciaObtenerResponse> obtenerTransferencias(int puntoVenta, String lotes) async{
+    try{
+      Response response = await _dio.get('/ObtenerTransferencias?nPuntoVenta=$puntoVenta&cLotes=$lotes');
+      if (response.statusCode == 200 && response.data["nCodError"]==0) {
+        return TransferenciaObtenerResponse.fromJson(response.data["oContenido"]);
+      } else {
+        throw Exception(response.data["nCodError"]);
+      }
+    }catch(e) {
+      print("[ERROR PROVIDER] obtenerTransferencias : ${e.toString()}");
+      throw e;
+    }
+  }
+
+  Future<SaveRequestCab> eliminarTransferencia(int puntoVenta, int repeso) async{
+    try{
+      Response response = await _dio.delete('/EliminarTransferencia?nPuntoVenta=$puntoVenta&nRepeso=$repeso');
+      if (response.statusCode == 200 && response.data["nCodError"]==0) {
+        return SaveRequestCab.fromJson(response.data["oContenido"]);
+      } else {
+        throw Exception(response.data["nCodError"]);
+      }
+    }catch(e) {
+      print("[ERROR PROVIDER] eliminarTransferencia : ${e.toString()}");
+      throw e;
+    }
+  }
+
+  Future<PesajeDetalleItem> eliminarTransferenciaDetalle(int puntoVenta, int repeso, int item) async{
+    try{
+      Response response = await _dio.delete('/EliminarTransferenciaItem?nPuntoVenta=$puntoVenta&nRepeso=$repeso&nItem=$item');
+      if (response.statusCode == 200 && response.data["nCodError"]==0) {
+        return PesajeDetalleItem.fromJson(response.data["oContenido"]);
+      } else {
+        throw Exception(response.data["cMsjError"]);
+      }
+    }catch(e) {
+      print("[ERROR PROVIDER] eliminarTransferenciaDetalle : ${e.toString()}");
+      throw e;
+    }
+  }
+
+  Future<Lote> obtenerUnidadesDisponiblesLote(int puntoVenta, int lotePrincipal, int subLote) async{
+    try{
+      Response response = await _dio.get('/ObtenerUnidadesDisponiblesLote?nPuntoVenta=$puntoVenta&nLotePrincipal=$lotePrincipal&nSubLote=$subLote');
+      if (response.statusCode == 200 && response.data["nCodError"]==0) {
+        return Lote.fromJson(response.data["oContenido"]);
+      } else {
+        throw Exception(response.data["cMsjError"]);
+      }
+    }catch(e) {
+      print("[ERROR PROVIDER] obtenerUnidadesDisponiblesLote : ${e.toString()}");
       throw e;
     }
   }

@@ -7,7 +7,7 @@ class SaveRequestCab {
   int Tipo;
   DateTime FechaRegistro;
   int NumeroPR;
-   int ItemPR;
+  int ItemPR;
   int Numero = 0;
   String LotesNumero;
   String ItemsPR;
